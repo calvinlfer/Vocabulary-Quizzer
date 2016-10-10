@@ -18,13 +18,4 @@ class Quiz @Inject() (vocabularyService: VocabularyService) extends Controller {
     if (vocabularyService.verify(sourceLanguage, word, targetLanguage, translation)) Ok
     else NotAcceptable
   }
-
-  val TargetLanguageHeader = "X-Target-Language"
-  def quizFromHeader(sourceLanguage: Lang) = Action { request =>
-    request.headers.get(TargetLanguageHeader)
-      .flatMap(targetLangStr => Lang.get(targetLangStr)) // Lang.get results in nesting so use flatMap
-      .flatMap(targetLang => vocabularyService.findRandomVocabulary(sourceLanguage, targetLang)) // same reason as above
-      .map(vocabulary => Ok(vocabulary.word))
-      .getOrElse(NotFound)
-  }
 }
