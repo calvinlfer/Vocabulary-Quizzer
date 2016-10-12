@@ -30,8 +30,24 @@ class Quiz @Inject() (vocabularyService: VocabularyService) extends Controller {
         QuizActor.props(wsClientRef, sourceLanguage, targetLanguage, vocabularyService)
   }
 
-  def check(sourceLanguage: Lang, word: String, targetLanguage: Lang, translation: String) = Action {
-    if (vocabularyService.verify(sourceLanguage, word, targetLanguage, translation)) Ok
-    else NotAcceptable
+  def check(sourceLanguage: Lang, word: String, targetLanguage: Lang, translation: String) = Action { request =>
+    val isCorrect = vocabularyService.verify(sourceLanguage, word, targetLanguage, translation)
+
+    // obtain the current scores from the Play session
+    val correctScore = request.session.get("correct").map(s => s.toInt).getOrElse(0)
+    val wrongScore = request.session.get("wrong").map(s => s.toInt).getOrElse(0)
+
+    // Place updated values in the session in addition to returning Ok or NotAcceptable
+    if (isCorrect) {
+      Ok.withSession(
+        "correct" -> (correctScore + 1).toString,
+        "wrong" -> wrongScore.toString
+      )
+    } else {
+      NotAcceptable.withSession(
+        "correct" -> correctScore.toString,
+        "wrong" -> (wrongScore + 1).toString
+      )
+    }
   }
 }
